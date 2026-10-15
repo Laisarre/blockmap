@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blockmap — iso level editor</title>
+  <meta name="description" content="A free browser tool for sketching isometric/diametric level layouts for quest and level design: zones, elevation, stairs, sprites, notes, and arrows, all paintable on a grid. No install, nothing to save manually." />
+  <link rel="canonical" href="https://laisarre.github.io/blockmap/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://laisarre.github.io/blockmap/" />
+  <meta property="og:title" content="Blockmap — iso level editor" />
+  <meta property="og:description" content="A free browser tool for sketching isometric/diametric level layouts for quest and level design: zones, elevation, stairs, sprites, notes, and arrows, all paintable on a grid." />
+  <meta property="og:image" content="https://laisarre.github.io/blockmap/docs/screenshots/overview.png" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Blockmap — iso level editor" />
+  <meta name="twitter:description" content="A free browser tool for sketching isometric/diametric level layouts for quest and level design." />
+  <meta name="twitter:image" content="https://laisarre.github.io/blockmap/docs/screenshots/overview.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="toolbar" class="toolbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div class="brand-text">
+        <div class="brand-title">Blockmap</div>
+        <div class="brand-subtitle">iso level editor</div>
+      </div>
+    </div>
+
+    <span class="sep"></span>
+
+    <button id="btn-new" class="tb-btn">New</button>
+    <button id="btn-open" class="tb-btn">Open...</button>
+    <input id="file-open" type="file" accept="application/json" hidden />
+    <button id="btn-save" class="tb-btn">Save</button>
+    <button id="btn-save-as" class="tb-btn">Save As...</button>
+    <button id="btn-preview" class="tb-btn">Preview...</button>
+    <button id="btn-export-settings" class="tb-btn">Export settings...</button>
+    <button id="btn-grid-size" class="tb-btn">Grid Size...</button>
+
+    <span class="spacer"></span>
+
+    <span class="status-pill">
+      <span id="zoom-label">Zoom: 100%</span>
+      <button id="btn-reset-view" class="pill-btn" title="Reset View">Reset</button>
+    </span>
+
+    <span class="spacer"></span>
+
+    <div class="layer-toggle">
+      <label><input type="radio" name="layer" value="zone" id="layer-zone" checked /><span>Zone</span></label>
+      <label><input type="radio" name="layer" value="setting" id="layer-setting" /><span>Setting</span></label>
+    </div>
+
+    <button id="btn-export" class="tb-btn tb-cta">Export PNG...</button>
+  </div>
+
+  <div class="body">
+    <nav id="left-sidebar" class="tool-rail" aria-label="Tools">
+      <label class="rail-btn" title="Paint"><input type="radio" name="tool" value="paint" checked /><span class="icon" aria-hidden="true">&#9635;</span><span class="sr-only">Paint</span></label>
+      <label class="rail-btn" title="Erase"><input type="radio" name="tool" value="erase" /><span class="icon" aria-hidden="true">&#10005;</span><span class="sr-only">Erase</span></label>
+      <label class="rail-btn" title="Select / Move"><input type="radio" name="tool" value="select" /><span class="icon" aria-hidden="true">&#10022;</span><span class="sr-only">Select / Move</span></label>
+      <label class="rail-btn" title="Note"><input type="radio" name="tool" value="note" /><span class="icon" aria-hidden="true">&#9993;</span><span class="sr-only">Note</span></label>
+      <label class="rail-btn" title="Arrow"><input type="radio" name="tool" value="arrow" /><span class="icon" aria-hidden="true">&#8599;</span><span class="sr-only">Arrow</span></label>
+      <label class="rail-btn" title="Stair"><input type="radio" name="tool" value="stair" /><span class="icon" aria-hidden="true">&#8801;</span><span class="sr-only">Stair</span></label>
+      <label class="rail-btn" title="Height Brush"><input type="radio" name="tool" value="height" /><span class="icon" aria-hidden="true">&#9650;</span><span class="sr-only">Height Brush</span></label>
+    </nav>
+
+    <main class="canvas-wrap">
+      <canvas id="board" tabindex="0"></canvas>
+
+      <section class="floating-panel options-float" aria-label="Tool options">
+        <div id="options-paint" class="tool-options">
+          <div class="options-header">
+            <span id="palette-label">Zone colors</span>
+          </div>
+          <div id="palette-list" class="swatch-list"></div>
+          <div class="btn-row">
+            <button id="btn-add-color">Add color</button>
+            <button id="btn-edit-color">Edit</button>
+            <button id="btn-remove-color">Remove</button>
+          </div>
+        </div>
+
+        <div id="options-height" class="tool-options" hidden>
+          <div class="row">
+            <span>Brush height</span>
+            <input id="brush-height" type="number" value="1" min="-5" max="10" step="1" />
+          </div>
+          <label class="row"><input id="height-apply-zone" type="checkbox" /> Apply to whole zone</label>
+          <p class="hint">When checked, clicking a painted cell stamps every connected same-color cell at once instead of just the one you clicked.</p>
+          <p class="hint">Right-click a cell to reset its height to 0.</p>
+        </div>
+
+        <div id="options-stair" class="tool-options" hidden>
+          <div class="row"><span>Width</span><input id="stair-width" type="number" value="1" min="1" max="10" /></div>
+          <div class="row"><span>Length</span><input id="stair-length" type="number" value="1" min="1" max="20" /></div>
+          <div class="row"><span>Height</span><input id="stair-height" type="number" value="1" min="1" max="20" /></div>
+          <p class="section-label">Direction</p>
+          <div id="stair-direction" class="dir-grid">
+            <label><input type="radio" name="stair-dir" value="row_plus" checked /><span>&#8601; Down-left</span></label>
+            <label><input type="radio" name="stair-dir" value="row_minus" /><span>&#8599; Up-right</span></label>
+            <label><input type="radio" name="stair-dir" value="col_plus" /><span>&#8600; Down-right</span></label>
+            <label><input type="radio" name="stair-dir" value="col_minus" /><span>&#8598; Up-left</span></label>
+          </div>
+          <p class="hint">Click a cell to place &middot; double-click to edit &middot; right-click to delete.</p>
+        </div>
+
+        <div id="options-arrow" class="tool-options" hidden>
+          <div class="options-header"><span>Arrow types</span></div>
+          <div id="arrow-palette-list" class="swatch-list"></div>
+          <div class="btn-row">
+            <button id="btn-add-arrow-type">Add type</button>
+            <button id="btn-edit-arrow-type">Edit</button>
+            <button id="btn-remove-arrow-type">Remove</button>
+          </div>
+          <p class="hint">Click-drag on the canvas to draw an arrow of the selected type. Double-click an arrow to switch its type; right-click to delete it.</p>
+        </div>
+
+        <div id="options-plain" class="tool-options" hidden>
+          <p class="hint" id="plain-hint"></p>
+        </div>
+      </section>
+
+      <section class="floating-panel legend-float" aria-label="Legend / cell counts">
+        <div class="options-header"><span>Legend / cell counts</span></div>
+        <div id="legend" class="legend"></div>
+      </section>
+    </main>
+
+    <aside id="right-sidebar" class="floating-panel sprite-drawer" aria-label="Sprite palette">
+      <div class="options-header">
+        <span>Sprites</span>
+        <button id="btn-import-sprites" class="icon-btn" title="Import sprite(s)..." aria-label="Import sprite(s)...">+</button>
+      </div>
+      <input id="file-sprites" type="file" accept="image/*" multiple hidden />
+      <div id="sprite-list" class="sprite-list"></div>
+      <p class="hint">Click a sprite, then click on the canvas to place it.</p>
+    </aside>
+  </div>
+
+  <div id="status-bar" class="status-bar">Ready.</div>
+
+  <div id="popover-layer"></div>
+  <div id="modal-layer"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
